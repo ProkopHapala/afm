@@ -21,6 +21,8 @@ class InverseAFMtrainer:
     in Ys. In mols the rows of the arrays correspond to the x, y, and z coordinates, the charge, and the element
     of each atom.
 
+    See also the tutorial: :ref:`generator-tutorial-title`.
+
     Arguments:
         afmulator: An instance of AFMulator.
         auxmaps: list of :class:`.AuxMapBase`.
@@ -320,6 +322,8 @@ class GeneratorAFMtrainer:
         - ``Ys``: AuxMap descriptors as an ``np.ndarray`` of shape ``(batch_size, n_auxmap, nx, ny)``.
         - ``mols``: List of length ``batch_size`` of atomic coordinates, atomic numbers, and charges as an ``np.ndarray`` of shape ``(n_atoms, 5)``.
         - ``sws``: Scan window bounds as an ``np.ndarray`` of shape ``(batch_size, n_tip, 2, 3)``.
+
+    See also the tutorial: :ref:`generator-tutorial-title`.
 
     Arguments:
         afmulator: An instance of AFMulator.

@@ -28,15 +28,13 @@ def generate_samples(sample_dirs, rotations):
 
         for rot in rotations:
             # We yield samples as dicts containing the input arguments to AFMulator.
-            # fmt:off
             sample_dict = {
                 "xyzs": xyzs,
                 "Zs": Zs,
                 "qs": hartree,
                 "rho_sample": density,
-                "rot": rot
+                "rot": rot,
             }
-            # fmt: on
 
             yield sample_dict
 
@@ -103,7 +101,6 @@ if __name__ == "__main__":
     rho_tip_delta, _, _ = TipDensity.from_file(co_dir / "CO_delta_density_aims.xsf")
 
     # Create the simulator
-    # fmt: off
     afmulator = AFMulator(
         pixPerAngstrome=10,
         scan_dim=(160, 160, 19),
@@ -111,9 +108,8 @@ if __name__ == "__main__":
         df_steps=10,
         npbc=(0, 0, 0),
         A_pauli=12,
-        B_pauli=1.2
+        B_pauli=1.2,
     )
-    # fmt: on
 
     # Create auxmap objects to generate image descriptors of the samples
     auxmap_args = {"scan_window": ((0, 0), (15.9, 15.9)), "scan_dim": (160, 160)}
@@ -128,6 +124,7 @@ if __name__ == "__main__":
         afmulator,
         aux_maps,
         sample_generator,
+        sim_type="FDBM",
         batch_size=6,  # Number of samples per batch
         distAbove=2.5,  # Tip-sample distance, taking into account the effective size of the tip and the sample atoms
         iZPPs=[8],  # Tip atomic numbers
@@ -137,21 +134,21 @@ if __name__ == "__main__":
 
     # Get samples from the trainer by iterating over it
     counter = 0
-    for ib, (Xs, Ys, mols, sws) in enumerate(trainer):
+    for ib, (afms, descriptors, mols, scan_windows) in enumerate(trainer):
         print(f"Batch {ib+1}")
 
         # Loop over samples in the batch
-        for X, Y, mol, sw in zip(Xs, Ys, mols, sws):
-            # X: AFM images
-            # Y: Image descriptors
+        for afm, desc, mol, sw in zip(afms, descriptors, mols, scan_windows):
+            # afm: AFM images
+            # desc: Image descriptors
             # mol: Sample atom coordinates, atomic numbers, and charges
             # sw: Scan window bounds
 
             # Plot AFM images
-            for i, x in enumerate(X):
+            for i, x in enumerate(afm):
                 rows, cols = 2, 5
                 fig = plt.figure(figsize=(3.2 * cols, 2.5 * rows))
-                for k in range(X.shape[-1]):
+                for k in range(afm.shape[-1]):
                     fig.add_subplot(rows, cols, k + 1)
                     plt.imshow(x[..., k].T, cmap="afmhot", origin="lower")
                     plt.colorbar()
@@ -163,7 +160,7 @@ if __name__ == "__main__":
             fig, axes = plt.subplots(1, len(aux_maps))
             fig.subplots_adjust(left=0.02, bottom=0.06, right=0.95, top=0.94, wspace=0.05)
             fig.set_size_inches(3 * len(aux_maps), 3)
-            for y, ax in zip(Y, axes):
+            for y, ax in zip(desc, axes):
                 im = ax.imshow(y.T, origin="lower")
                 fig.colorbar(im, ax=ax)
             plt.tight_layout()

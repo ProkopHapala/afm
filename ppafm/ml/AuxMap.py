@@ -1,21 +1,17 @@
+from abc import ABC, abstractmethod
+
 import numpy as np
 
 from .. import elements
 from ..atomicUtils import findBonds_
 from ..ocl import field as FFcl
-from ..ocl import oclUtils as oclu
 from ..ocl import relax as oclr
 
 
-class AuxMapBase:
+class AuxMapBase(ABC):
     """Base class for AuxMap subclasses.
 
-    Each subclass implements the method `eval` with the input arguments:
-
-    - xyzqs: numpy.ndarray of floats. xyz coordinates and charges of atoms in molecule
-    - Zs: numpy.ndarray of ints. Elements of atoms in molecule.
-    - pot: HartreePotential. Sample hartree potential.
-    - rot: np.ndarray of shape (3, 3). Sample rotation.
+    Each subclass must override the method `eval`, which gets called when the object instance is called.
 
     Arguments:
         scan_dim: tuple of two ints. Indicates the pixel size of the scan in x and y.
@@ -28,7 +24,7 @@ class AuxMapBase:
             raise RuntimeError("OpenCL context not initialized. Initialize with ocl.field.init before creating an AuxMap object.")
         self.scan_dim = scan_dim
         self.scan_window = scan_window
-        self.projector = FFcl.AtomProcjetion()
+        self.projector = FFcl.AtomProjection()
         if zmin:
             self.projector.zmin = zmin
         self.nChan = 1
@@ -40,6 +36,16 @@ class AuxMapBase:
             xyz_center = xyzqs[:, :3].mean(axis=0)
             xyzqs[:, :3] = np.dot(xyzqs[:, :3] - xyz_center, rot.T) + xyz_center
         return self.eval(xyzqs, Zs, pot, rot)
+
+    @abstractmethod
+    def eval(xyzqs, Zs, pot, rot):
+        """
+        Arguments:
+            xyzqs: numpy.ndarray of floats. xyz coordinates and charges of atoms in molecule
+            Zs: numpy.ndarray of ints. Elements of atoms in molecule.
+            pot: HartreePotential. Sample hartree potential.
+            rot: np.ndarray of shape (3, 3). Sample rotation.
+        """
 
     def prepare_projector(self, xyzqs, Zs, pos0, bonds2atoms=None, elem_channels=None):
         rot = np.eye(3)

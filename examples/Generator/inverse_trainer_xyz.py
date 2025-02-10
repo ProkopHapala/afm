@@ -28,9 +28,6 @@ if __name__ == "__main__":
         pixPerAngstrome=10,
         scan_dim=(128, 128, 19),
         scan_window=((2.0, 2.0, 5.0), (18.0, 18.0, 6.9)),
-        iZPP=8,
-        QZs=[0.1, 0, -0.1, 0],
-        Qs=[-10, 20, -10, 0],
         df_steps=10,
         npbc=(0, 0, 0),
     )
@@ -46,10 +43,20 @@ if __name__ == "__main__":
     ]
 
     # Paths to molecule xyz files
-    paths = list(Path("example_molecules").glob("*.xyz"))
+    xyzs_dir = Path("example_molecules")
+    paths = list(xyzs_dir.glob("*.xyz"))
 
     # Combine everything to one
-    trainer = ExampleTrainer(afmulator, aux_maps, paths, batch_size=20, distAbove=4.5)
+    trainer = ExampleTrainer(
+        afmulator,
+        aux_maps,
+        paths,
+        batch_size=20,
+        distAbove=4.5,
+        iZPPs=[8],
+        QZs=[[0.1, 0, -0.1, 0]],
+        Qs=[[-10, 20, -10, 0]],
+    )
     # trainer.bRuntime = True
 
     # Augment molecule list with rotations and shuffle
@@ -72,6 +79,7 @@ if __name__ == "__main__":
 
         # Iterate over samples in the batch
         for j in range(len(desc[0])):
+
             # Plot AFM
             for i, x in enumerate(afm):
                 rows, cols = 2, 5
