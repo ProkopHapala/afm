@@ -27,6 +27,7 @@ parser = OptionParser()
 parser.add_option( "-i",           action="store", type="string", help="input file - *.xsf or *.cube - where the densities and geometries are originally", default= 'CHGCAR.xsf' )
 parser.add_option( "-o",           action="store", type="string", help="output xyz file name",                    default= 'new_xyz.xyz'   )
 parser.add_option( "-z", "--zcut", action="store", type="float",  help="cut-out atoms bellow this height",        default= -100.           )
+parser.add_option( "-n", "--no_morse", action="store_false"    ,  help="do not-fit the morse parameters -- they can cause problems for atoms on top of each other",   default= True            )
 parser.add_option( "--height",     action="store", type="float",  help="how far above atom is isosurface fitted", default= +5.0            )
 parser.add_option( "--old",        action="store_true",           help="use old version of atomtypes.ini - useful when combining with old-style double PP", default= False )
 parser.add_option( "--not_plot",   action="store_false"        ,  help="do not-plot the lines above atoms",       default= True            )
@@ -126,7 +127,11 @@ number_of_atoms = len(ilist)
 for i in ilist:
     fs = data[1 + i]
     zs = zs_bare  # - atoms_z[i]
-    alpha, A = fitExp(zs - atoms_z[i], fs, zmin, zmax)
+    if options.old or not options.no_morse:  # Morse is not compatible with the old style and also adding options to be removed from the new style
+        alpha = 0.0
+        A = 0.0
+    else:
+        alpha, A = fitExp(zs - atoms_z[i], fs, zmin, zmax)
 
     Riso = getIsoArg(zs, fs, iso=0.017, atom_z=atoms_z[i])
     if not (
@@ -152,9 +157,9 @@ print()
 for ie in range(number_of_original_elements):
     # This part is important so the PP force-field can be created without a problem ...
     tmp = FFparams[ie]
-    # print(tmp[0],tmp[1],tmp[2],tmp[3],tmp[4]) # if needed for debugging - tmp[4] is not there for options.old ...
+    print(tmp[0], tmp[1], tmp[2], tmp[3], tmp[4])  # if needed for debugging - tmp[4] is not there for options.old ...
     if options.old:  # old verison of atomtypes.ini
-        f2.write(f"{tmp[0]} {tmp[1]} {ie+1+number_of_atoms} {tmp[3].decode('UTF-8')}\n")
+        f2.write(f"{tmp[0]} {tmp[1]} {ie+1+number_of_atoms} {tmp[4].decode('UTF-8')}\n")
     else:  # ocl version of atomtypes.ini
         f2.write(f"{tmp[0]} {tmp[1]} {tmp[2]} {ie+1+number_of_atoms} {tmp[4].decode('UTF-8')}\n")
 
